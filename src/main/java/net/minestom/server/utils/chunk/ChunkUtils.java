@@ -104,7 +104,6 @@ public final class ChunkUtils {
      */
     public static int getChunkCoordinate(double xz) {
         final int coordinate = (int) Math.floor(xz);
-        assert Chunk.CHUNK_SIZE_X == Chunk.CHUNK_SIZE_Z;
         return Math.floorDiv(coordinate, Chunk.CHUNK_SIZE_X);
     }
 

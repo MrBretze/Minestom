@@ -2,6 +2,7 @@ package net.minestom.server.event.player;
 
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.PlayerEvent;
+import net.minestom.server.instance.ChunkCoordinate;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,12 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlayerChunkUnloadEvent extends PlayerEvent {
 
-    private final int chunkX, chunkZ;
+    private final ChunkCoordinate chunkCoordinate;
 
-    public PlayerChunkUnloadEvent(@NotNull Player player, int chunkX, int chunkZ) {
+    public PlayerChunkUnloadEvent(@NotNull Player player, ChunkCoordinate chunkCoordinate) {
         super(player);
-        this.chunkX = chunkX;
-        this.chunkZ = chunkZ;
+        this.chunkCoordinate = chunkCoordinate;
     }
 
     /**
@@ -25,7 +25,7 @@ public class PlayerChunkUnloadEvent extends PlayerEvent {
      * @return the chunk X
      */
     public int getChunkX() {
-        return chunkX;
+        return chunkCoordinate.getChunkX();
     }
 
     /**
@@ -34,6 +34,6 @@ public class PlayerChunkUnloadEvent extends PlayerEvent {
      * @return the chunk Z
      */
     public int getChunkZ() {
-        return chunkZ;
+        return chunkCoordinate.getChunkZ();
     }
 }

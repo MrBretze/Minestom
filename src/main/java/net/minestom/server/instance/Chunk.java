@@ -67,7 +67,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
     protected Instance instance;
     @NotNull
     protected final Biome[] biomes;
-    protected final int chunkX, chunkZ;
+    protected final ChunkCoordinate chunkCoordinate;
 
     // Options
     private final boolean shouldGenerate;
@@ -86,8 +86,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
     public Chunk(@NotNull Instance instance, @Nullable Biome[] biomes, int chunkX, int chunkZ, boolean shouldGenerate) {
         this.identifier = UUID.randomUUID();
         this.instance = instance;
-        this.chunkX = chunkX;
-        this.chunkZ = chunkZ;
+        this.chunkCoordinate = new ChunkCoordinate(chunkX, chunkZ);
         this.shouldGenerate = shouldGenerate;
 
         if (biomes != null && biomes.length == BIOME_COUNT) {
@@ -317,7 +316,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
      * @return the chunk X
      */
     public int getChunkX() {
-        return chunkX;
+        return chunkCoordinate.getChunkX();
     }
 
     /**
@@ -326,7 +325,16 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
      * @return the chunk Z
      */
     public int getChunkZ() {
-        return chunkZ;
+        return chunkCoordinate.getChunkZ();
+    }
+
+    /**
+     * Gets the chunk coordinate
+     *
+     * @return the chunk Coordinate
+     */
+    public ChunkCoordinate getChunkCoordinate() {
+        return chunkCoordinate;
     }
 
     /**
@@ -448,7 +456,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + chunkX + ":" + chunkZ + "]";
+        return getClass().getSimpleName() + "[" + getChunkX() + ":" + getChunkZ() + "]";
     }
 
     /**
@@ -469,7 +477,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
         sendChunk(player);
 
         if (result) {
-            PlayerChunkLoadEvent playerChunkLoadEvent = new PlayerChunkLoadEvent(player, chunkX, chunkZ);
+            PlayerChunkLoadEvent playerChunkLoadEvent = new PlayerChunkLoadEvent(player, getChunkCoordinate());
             player.callEvent(PlayerChunkLoadEvent.class, playerChunkLoadEvent);
         }
 
@@ -491,7 +499,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
         player.getViewableChunks().remove(this);
 
         if (result) {
-            PlayerChunkUnloadEvent playerChunkUnloadEvent = new PlayerChunkUnloadEvent(player, chunkX, chunkZ);
+            PlayerChunkUnloadEvent playerChunkUnloadEvent = new PlayerChunkUnloadEvent(player, getChunkCoordinate());
             player.callEvent(PlayerChunkUnloadEvent.class, playerChunkUnloadEvent);
         }
 

@@ -151,7 +151,7 @@ public class DynamicChunk extends Chunk {
 
                 this.updatableBlocksLastUpdate.put(index, time); // Refresh last update time
 
-                final BlockPosition blockPosition = ChunkUtils.getBlockPosition(index, chunkX, chunkZ);
+                final BlockPosition blockPosition = ChunkUtils.getBlockPosition(index, getChunkX(), getChunkZ());
                 final Data data = getBlockData(index);
                 customBlock.update(instance, blockPosition, data);
             }
@@ -391,8 +391,8 @@ public class DynamicChunk extends Chunk {
         }
         ChunkDataPacket fullDataPacket = new ChunkDataPacket(getIdentifier(), getLastChangeTime());
         fullDataPacket.biomes = biomes;
-        fullDataPacket.chunkX = chunkX;
-        fullDataPacket.chunkZ = chunkZ;
+        fullDataPacket.chunkX = getChunkX();
+        fullDataPacket.chunkZ = getChunkZ();
         fullDataPacket.paletteStorage = blockPalette.clone();
         fullDataPacket.customBlockPaletteStorage = customBlockPalette.clone();
         fullDataPacket.blockEntities = blockEntities.clone();
