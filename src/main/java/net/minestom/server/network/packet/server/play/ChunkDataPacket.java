@@ -27,6 +27,8 @@ import org.jglrxavpok.hephaistos.nbt.NBTCompound;
 import org.jglrxavpok.hephaistos.nbt.NBTException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +38,7 @@ public class ChunkDataPacket implements ServerPacket, CacheablePacket {
     private static final TemporaryPacketCache CACHE = new TemporaryPacketCache(5, TimeUnit.MINUTES);
 
     public boolean fullChunk;
-    public Biome[] biomes;
+    public List<Biome> biomes;
     public int chunkX, chunkZ;
 
     public PaletteStorage paletteStorage;
@@ -120,7 +122,7 @@ public class ChunkDataPacket implements ServerPacket, CacheablePacket {
 
         // Biome data
         if (fullChunk) {
-            writer.writeVarInt(biomes.length);
+            writer.writeVarInt(biomes.size());
             for (Biome biome : biomes) {
                 writer.writeVarInt(biome.getId());
             }
@@ -173,9 +175,9 @@ public class ChunkDataPacket implements ServerPacket, CacheablePacket {
             // Biomes
             if (fullChunk) {
                 int[] biomesIds = reader.readVarIntArray();
-                this.biomes = new Biome[biomesIds.length];
+                this.biomes = new ArrayList<>();
                 for (int i = 0; i < biomesIds.length; i++) {
-                    this.biomes[i] = MinecraftServer.getBiomeManager().getById(biomesIds[i]);
+                    biomes.set(i, MinecraftServer.getBiomeManager().getById(i));
                 }
             }
 

@@ -6,6 +6,8 @@ import net.minestom.server.world.biomes.Biome;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Used to customize which type of {@link Chunk} an implementation should use.
  */
@@ -22,5 +24,5 @@ public interface ChunkSupplier {
      * @return a newly {@link Chunk} object, cannot be null
      */
     @NotNull
-    Chunk createChunk(@NotNull Instance instance, @Nullable Biome[] biomes, int chunkX, int chunkZ);
+    Chunk createChunk(@NotNull Instance instance, @Nullable List<Biome> biomes, int chunkX, int chunkZ);
 }

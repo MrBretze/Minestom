@@ -120,6 +120,40 @@ public class Biome {
         return this.temperature_modifier;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Biome biome = (Biome) o;
+
+        if (getId() != biome.getId()) return false;
+        if (Float.compare(biome.getDepth(), getDepth()) != 0) return false;
+        if (Float.compare(biome.getTemperature(), getTemperature()) != 0) return false;
+        if (Float.compare(biome.getScale(), getScale()) != 0) return false;
+        if (Float.compare(biome.getDownfall(), getDownfall()) != 0) return false;
+        if (!getName().equals(biome.getName())) return false;
+        if (getCategory() != biome.getCategory()) return false;
+        if (!getEffects().equals(biome.getEffects())) return false;
+        if (getPrecipitation() != biome.getPrecipitation()) return false;
+        return getTemperature_modifier() == biome.getTemperature_modifier();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getId();
+        result = 31 * result + getName().hashCode();
+        result = 31 * result + (getDepth() != +0.0f ? Float.floatToIntBits(getDepth()) : 0);
+        result = 31 * result + (getTemperature() != +0.0f ? Float.floatToIntBits(getTemperature()) : 0);
+        result = 31 * result + (getScale() != +0.0f ? Float.floatToIntBits(getScale()) : 0);
+        result = 31 * result + (getDownfall() != +0.0f ? Float.floatToIntBits(getDownfall()) : 0);
+        result = 31 * result + getCategory().hashCode();
+        result = 31 * result + getEffects().hashCode();
+        result = 31 * result + getPrecipitation().hashCode();
+        result = 31 * result + getTemperature_modifier().hashCode();
+        return result;
+    }
+
     public enum Precipitation {
         RAIN("rain"), NONE("none"), SNOW("snow");
 
