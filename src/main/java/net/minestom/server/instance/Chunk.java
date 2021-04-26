@@ -66,7 +66,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
 
     protected Instance instance;
     @NotNull
-    protected final Biome[] biomes;
+    protected final List<Biome> biomes;
     protected final ChunkCoordinate chunkCoordinate;
 
     // Options
@@ -83,16 +83,16 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
     // Data
     protected Data data;
 
-    public Chunk(@NotNull Instance instance, @Nullable Biome[] biomes, int chunkX, int chunkZ, boolean shouldGenerate) {
+    public Chunk(@NotNull Instance instance, @Nullable List<Biome> biomes, int chunkX, int chunkZ, boolean shouldGenerate) {
         this.identifier = UUID.randomUUID();
         this.instance = instance;
         this.chunkCoordinate = new ChunkCoordinate(chunkX, chunkZ);
         this.shouldGenerate = shouldGenerate;
 
-        if (biomes != null && biomes.length == BIOME_COUNT) {
+        if (biomes != null && biomes.size() == BIOME_COUNT) {
             this.biomes = biomes;
         } else {
-            this.biomes = new Biome[BIOME_COUNT];
+            this.biomes = new ArrayList<>(Arrays.asList(new Biome[BIOME_COUNT]));
         }
     }
 
@@ -306,7 +306,7 @@ public abstract class Chunk implements Viewable, Tickable, DataContainer {
         return instance;
     }
 
-    public Biome[] getBiomes() {
+    public List<Biome> getBiomes() {
         return biomes;
     }
 

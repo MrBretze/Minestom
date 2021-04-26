@@ -1,6 +1,7 @@
 package net.minestom.server.instance;
 
 import com.extollit.gaming.ai.path.model.ColumnarOcclusionFieldList;
+import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2ShortMap;
 import it.unimi.dsi.fastutil.objects.Object2ShortOpenHashMap;
@@ -26,6 +27,8 @@ import net.minestom.server.world.biomes.Biome;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -62,14 +65,14 @@ public class DynamicChunk extends Chunk {
     private ChunkDataPacket cachedPacket;
     private long cachedPacketTime;
 
-    public DynamicChunk(@NotNull Instance instance, @Nullable Biome[] biomes, int chunkX, int chunkZ,
+    public DynamicChunk(@NotNull Instance instance, @Nullable List<Biome> biomes, int chunkX, int chunkZ,
                         @NotNull PaletteStorage blockPalette, @NotNull PaletteStorage customBlockPalette) {
         super(instance, biomes, chunkX, chunkZ, true);
         this.blockPalette = blockPalette;
         this.customBlockPalette = customBlockPalette;
     }
 
-    public DynamicChunk(@NotNull Instance instance, @Nullable Biome[] biomes, int chunkX, int chunkZ) {
+    public DynamicChunk(@NotNull Instance instance, @Nullable List<Biome> biomes, int chunkX, int chunkZ) {
         this(instance, biomes, chunkX, chunkZ,
                 new PaletteStorage(8, 2),
                 new PaletteStorage(8, 2));
@@ -241,8 +244,8 @@ public class DynamicChunk extends Chunk {
             }
 
             // Write the biomes id
-            for (int i = 0; i < BIOME_COUNT; i++) {
-                final byte id = (byte) biomes[i].getId();
+            for (Biome biome : getBiomes()) {
+                final byte id = (byte) biome.getId();
                 chunkWriter.writeByte(id);
             }
 
@@ -347,7 +350,7 @@ public class DynamicChunk extends Chunk {
                 // Biomes
                 for (int i = 0; i < BIOME_COUNT; i++) {
                     final byte id = reader.readByte();
-                    this.biomes[i] = BIOME_MANAGER.getById(id);
+                    biomes.set(i, BIOME_MANAGER.getById(id));
                 }
 
                 // Loop for all blocks in the chunk
@@ -407,7 +410,7 @@ public class DynamicChunk extends Chunk {
     @NotNull
     @Override
     public Chunk copy(@NotNull Instance instance, int chunkX, int chunkZ) {
-        DynamicChunk dynamicChunk = new DynamicChunk(instance, biomes.clone(), chunkX, chunkZ);
+        DynamicChunk dynamicChunk = new DynamicChunk(instance, ImmutableList.copyOf(biomes), chunkX, chunkZ);
         dynamicChunk.blockPalette = blockPalette.clone();
         dynamicChunk.customBlockPalette = customBlockPalette.clone();
         dynamicChunk.blocksData.putAll(blocksData);
