@@ -3,6 +3,7 @@ package net.minestom.server.utils.entity;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.instance.Chunk;
+import net.minestom.server.instance.ChunkCoordinate;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.utils.BlockPosition;
@@ -21,12 +22,10 @@ public final class EntityUtils {
     public static void forEachRange(@NotNull Instance instance, @NotNull Position position,
                                     int viewDistance,
                                     @NotNull Consumer<Entity> consumer) {
-        final long[] chunksInRange = ChunkUtils.getChunksInRange(position, viewDistance);
+        final ChunkCoordinate[] chunksInRange = ChunkUtils.getChunksInRange(position, viewDistance);
 
-        for (long chunkIndex : chunksInRange) {
-            final int chunkX = ChunkUtils.getChunkCoordX(chunkIndex);
-            final int chunkZ = ChunkUtils.getChunkCoordZ(chunkIndex);
-            final Chunk chunk = instance.getChunk(chunkX, chunkZ);
+        for (ChunkCoordinate chunkCoordinate : chunksInRange) {
+            final Chunk chunk = instance.getChunk(chunkCoordinate);
             if (chunk == null)
                 continue;
             instance.getChunkEntities(chunk).forEach(consumer);
@@ -41,11 +40,12 @@ public final class EntityUtils {
 
         final Chunk chunk = ent1.getInstance().getChunkAt(ent1.getPosition());
 
-        final long[] visibleChunksEntity = ChunkUtils.getChunksInRange(ent2.getPosition(), MinecraftServer.getEntityViewDistance());
-        for (long visibleChunk : visibleChunksEntity) {
-            final int chunkX = ChunkUtils.getChunkCoordX(visibleChunk);
-            final int chunkZ = ChunkUtils.getChunkCoordZ(visibleChunk);
-            if (chunk.getChunkX() == chunkX && chunk.getChunkZ() == chunkZ)
+        if (chunk == null)
+            return false;
+
+        final ChunkCoordinate[] visibleChunksEntity = ChunkUtils.getChunksInRange(ent2.getPosition(), MinecraftServer.getEntityViewDistance());
+        for (ChunkCoordinate visibleChunk : visibleChunksEntity) {
+            if (chunk.getChunkX() == visibleChunk.getChunkX() && chunk.getChunkZ() == visibleChunk.getChunkZ())
                 return true;
         }
 

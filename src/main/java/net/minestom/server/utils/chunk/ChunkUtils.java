@@ -3,6 +3,7 @@ package net.minestom.server.utils.chunk;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.minestom.server.instance.Chunk;
+import net.minestom.server.instance.ChunkCoordinate;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.utils.BlockPosition;
 import net.minestom.server.utils.MathUtils;
@@ -11,6 +12,7 @@ import net.minestom.server.utils.callback.OptionalCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ChunkUtils {
@@ -28,19 +30,14 @@ public final class ChunkUtils {
      * if {@link Instance#hasEnabledAutoChunkLoad()} returns false and the chunk is not already loaded.
      *
      * @param instance     the instance to load the chunks from
-     * @param chunks       the chunks to loaded, long value from {@link #getChunkIndex(int, int)}
      * @param eachCallback the optional callback when a chunk get loaded
      * @param endCallback  the optional callback when all the chunks have been loaded
      */
-    public static void optionalLoadAll(@NotNull Instance instance, @NotNull long[] chunks,
-                                       @Nullable ChunkCallback eachCallback, @Nullable ChunkCallback endCallback) {
+    public static void optionalLoadAll(@NotNull Instance instance, @NotNull ChunkCoordinate[] chunks, @Nullable ChunkCallback eachCallback, @Nullable ChunkCallback endCallback) {
         final int length = chunks.length;
         AtomicInteger counter = new AtomicInteger(0);
 
-        for (long visibleChunk : chunks) {
-            final int chunkX = ChunkUtils.getChunkCoordX(visibleChunk);
-            final int chunkZ = ChunkUtils.getChunkCoordZ(visibleChunk);
-
+        for (ChunkCoordinate visibleChunk : chunks) {
             final ChunkCallback callback = (chunk) -> {
                 OptionalCallback.execute(eachCallback, chunk);
                 final boolean isLast = counter.get() == length - 1;
@@ -54,7 +51,7 @@ public final class ChunkUtils {
             };
 
             // WARNING: if auto load is disabled and no chunks are loaded beforehand, player will be stuck.
-            instance.loadOptionalChunk(chunkX, chunkZ, callback);
+            instance.loadOptionalChunk(visibleChunk.getChunkX(), visibleChunk.getChunkZ(), callback);
         }
     }
 
@@ -107,19 +104,6 @@ public final class ChunkUtils {
         return Math.floorDiv(coordinate, Chunk.CHUNK_SIZE_X);
     }
 
-    /**
-     * Gets the chunk index of chunk coordinates.
-     * <p>
-     * Used when you want to store a chunk somewhere without using a reference to the whole object
-     * (as this can lead to memory leaks).
-     *
-     * @param chunkX the chunk X
-     * @param chunkZ the chunk Z
-     * @return a number storing the chunk X and Z
-     */
-    public static long getChunkIndex(int chunkX, int chunkZ) {
-        return (((long) chunkX) << 32) | (chunkZ & 0xffffffffL);
-    }
 
     public static long getChunkIndexWithSection(int chunkX, int chunkZ, int section) {
         long l = 0L;
@@ -127,26 +111,6 @@ public final class ChunkUtils {
         l |= ((long) section & 1048575L);
         l |= ((long) chunkZ & 4194303L) << 20;
         return l;
-    }
-
-    /**
-     * Converts a chunk index to its chunk X position.
-     *
-     * @param index the chunk index computed by {@link #getChunkIndex(int, int)}
-     * @return the chunk X based on the index
-     */
-    public static int getChunkCoordX(long index) {
-        return (int) (index >> 32);
-    }
-
-    /**
-     * Converts a chunk index to its chunk Z position.
-     *
-     * @param index the chunk index computed by {@link #getChunkIndex(int, int)}
-     * @return the chunk Z based on the index
-     */
-    public static int getChunkCoordZ(long index) {
-        return (int) index;
     }
 
     public static int getSectionAt(int y) {
@@ -161,9 +125,9 @@ public final class ChunkUtils {
      * @return an array containing chunks index
      */
     @NotNull
-    public static long[] getChunksInRange(@NotNull Position position, int range) {
+    public static ChunkCoordinate[] getChunksInRange(@NotNull Position position, int range) {
         range = range * 2;
-        long[] visibleChunks = new long[MathUtils.square(range + 1)];
+        ChunkCoordinate[] visibleChunks = new ChunkCoordinate[MathUtils.square(range + 1)];
         final int startLoop = -(range / 2);
         final int endLoop = range / 2 + 1;
         int counter = 0;
@@ -171,7 +135,7 @@ public final class ChunkUtils {
             for (int z = startLoop; z < endLoop; z++) {
                 final int chunkX = getChunkCoordinate(position.getX() + Chunk.CHUNK_SIZE_X * x);
                 final int chunkZ = getChunkCoordinate(position.getZ() + Chunk.CHUNK_SIZE_Z * z);
-                visibleChunks[counter++] = getChunkIndex(chunkX, chunkZ);
+                visibleChunks[counter++] = new ChunkCoordinate(chunkX, chunkZ);
             }
         }
         return visibleChunks;
@@ -186,8 +150,8 @@ public final class ChunkUtils {
      * @return an array containing all the loaded neighbours chunk index
      */
     @NotNull
-    public static long[] getNeighbours(@NotNull Instance instance, int chunkX, int chunkZ) {
-        LongList chunks = new LongArrayList();
+    public static ChunkCoordinate[] getNeighbours(@NotNull Instance instance, int chunkX, int chunkZ) {
+        ArrayList<ChunkCoordinate> chunks = new ArrayList<>();
         // Constants used to loop through the neighbors
         final int[] posX = {1, 0, -1};
         final int[] posZ = {1, 0, -1};
@@ -204,13 +168,12 @@ public final class ChunkUtils {
                 final Chunk chunk = instance.getChunk(targetX, targetZ);
                 if (ChunkUtils.isLoaded(chunk)) {
                     // Chunk is loaded, add it
-                    final long index = getChunkIndex(targetX, targetZ);
-                    chunks.add(index);
+                    chunks.add(new ChunkCoordinate(chunkX, chunkZ));
                 }
 
             }
         }
-        return chunks.toArray(new long[0]);
+        return chunks.toArray(new ChunkCoordinate[0]);
     }
 
     /**

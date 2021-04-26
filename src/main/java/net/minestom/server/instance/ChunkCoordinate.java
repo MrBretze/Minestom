@@ -9,6 +9,11 @@ public class ChunkCoordinate {
         this.chunkZ = chunkZ;
     }
 
+    public ChunkCoordinate(Chunk chunk) {
+        this.chunkX = chunk.getChunkX();
+        this.chunkZ = chunk.getChunkZ();
+    }
+
     public int getChunkX() {
         return chunkX;
     }
@@ -33,5 +38,13 @@ public class ChunkCoordinate {
         int result = getChunkX();
         result = 31 * result + getChunkZ();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ChunkCoordinate{" +
+                "chunkX=" + chunkX +
+                ", chunkZ=" + chunkZ +
+                '}';
     }
 }

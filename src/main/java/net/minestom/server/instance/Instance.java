@@ -88,7 +88,7 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
     protected final Set<EntityCreature> creatures = ConcurrentHashMap.newKeySet();
     protected final Set<ExperienceOrb> experienceOrbs = ConcurrentHashMap.newKeySet();
     // Entities per chunk
-    protected final Map<Long, Set<Entity>> chunkEntities = new ConcurrentHashMap<>();
+    protected final Map<ChunkCoordinate, Set<Entity>> chunkEntities = new ConcurrentHashMap<>();
     private final Object entitiesLock = new Object(); // Lock used to prevent the entities Set and Map to be subject to race condition
 
     // the uuid of this instance
@@ -195,6 +195,8 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
      */
     @Nullable
     public abstract Chunk getChunk(int chunkX, int chunkZ);
+
+    public abstract Chunk getChunk(ChunkCoordinate chunkCoordinate);
 
     /**
      * Saves a {@link Chunk} to permanent storage.
@@ -490,8 +492,7 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
         if (!ChunkUtils.isLoaded(chunk))
             return Collections.emptySet();
 
-        final long index = ChunkUtils.getChunkIndex(chunk.getChunkX(), chunk.getChunkZ());
-        final Set<Entity> entities = getEntitiesInChunk(index);
+        final Set<Entity> entities = getEntitiesInChunk(chunk);
         return Collections.unmodifiableSet(entities);
     }
 
@@ -945,9 +946,8 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
         Check.notNull(chunk,
                 "The chunk " + chunk + " is not loaded, you can make it automatic by using Instance#enableAutoChunkLoad(true)");
         Check.argCondition(!chunk.isLoaded(), "Chunk " + chunk + " has been unloaded previously");
-        final long chunkIndex = ChunkUtils.getChunkIndex(chunk.getChunkX(), chunk.getChunkZ());
         synchronized (entitiesLock) {
-            Set<Entity> entities = getEntitiesInChunk(chunkIndex);
+            Set<Entity> entities = getEntitiesInChunk(chunk);
             entities.add(entity);
 
             this.entities.add(entity);
@@ -972,8 +972,7 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
     @ApiStatus.Internal
     public void UNSAFE_removeEntityFromChunk(@NotNull Entity entity, @NotNull Chunk chunk) {
         synchronized (entitiesLock) {
-            final long chunkIndex = ChunkUtils.getChunkIndex(chunk.getChunkX(), chunk.getChunkZ());
-            Set<Entity> entities = getEntitiesInChunk(chunkIndex);
+            Set<Entity> entities = getEntitiesInChunk(chunk);
             entities.remove(entity);
 
             this.entities.remove(entity);
@@ -988,8 +987,13 @@ public abstract class Instance implements BlockModifier, Tickable, EventHandler,
     }
 
     @NotNull
-    private Set<Entity> getEntitiesInChunk(long index) {
-        return chunkEntities.computeIfAbsent(index, i -> ConcurrentHashMap.newKeySet());
+    private Set<Entity> getEntitiesInChunk(ChunkCoordinate coordinate) {
+        return chunkEntities.computeIfAbsent(coordinate, i -> ConcurrentHashMap.newKeySet());
+    }
+
+    @NotNull
+    private Set<Entity> getEntitiesInChunk(Chunk chunk) {
+        return getEntitiesInChunk(chunk.getChunkCoordinate());
     }
 
     /**

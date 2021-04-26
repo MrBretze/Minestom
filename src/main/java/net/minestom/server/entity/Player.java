@@ -36,6 +36,7 @@ import net.minestom.server.event.item.ItemUpdateStateEvent;
 import net.minestom.server.event.item.PickupExperienceEvent;
 import net.minestom.server.event.player.*;
 import net.minestom.server.instance.Chunk;
+import net.minestom.server.instance.ChunkCoordinate;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.block.CustomBlock;
 import net.minestom.server.inventory.Inventory;
@@ -662,7 +663,7 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
             }
 
             // Load all the required chunks
-            final long[] visibleChunks = ChunkUtils.getChunksInRange(spawnPosition, getChunkRange());
+            final ChunkCoordinate[] visibleChunks = ChunkUtils.getChunksInRange(spawnPosition, getChunkRange());
 
             final ChunkCallback endCallback = chunk -> {
                 // This is the last chunk to be loaded , spawn player
@@ -1581,12 +1582,11 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
      */
     public void refreshVisibleChunks(@NotNull Chunk newChunk) {
         // Previous chunks indexes
-        final long[] lastVisibleChunks = viewableChunks.stream().mapToLong(viewableChunks ->
-                ChunkUtils.getChunkIndex(viewableChunks.getChunkX(), viewableChunks.getChunkZ())
-        ).toArray();
+        final ChunkCoordinate[] lastVisibleChunks = viewableChunks.stream().map(viewableChunks ->
+                new ChunkCoordinate(viewableChunks.getChunkX(), viewableChunks.getChunkZ())).toArray(ChunkCoordinate[]::new);
 
         // New chunks indexes
-        final long[] updatedVisibleChunks = ChunkUtils.getChunksInRange(newChunk.toPosition(), getChunkRange());
+        final ChunkCoordinate[] updatedVisibleChunks = ChunkUtils.getChunksInRange(newChunk.toPosition(), getChunkRange());
 
         // Find the difference between the two arrays
         final int[] oldChunks = ArrayUtils.getDifferencesBetweenArray(lastVisibleChunks, updatedVisibleChunks);
@@ -1594,9 +1594,7 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
 
         // Unload old chunks
         for (int index : oldChunks) {
-            final long chunkIndex = lastVisibleChunks[index];
-            final int chunkX = ChunkUtils.getChunkCoordX(chunkIndex);
-            final int chunkZ = ChunkUtils.getChunkCoordZ(chunkIndex);
+            final ChunkCoordinate chunkCoordinate = lastVisibleChunks[index];
 
             // TODO prevent the client from getting lag spikes when re-loading large chunks
             // Probably by having a distinction between visible and loaded (cache) chunks
@@ -1605,7 +1603,8 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
             unloadChunkPacket.chunkZ = chunkZ;
             playerConnection.sendPacket(unloadChunkPacket);*/
 
-            final Chunk chunk = instance.getChunk(chunkX, chunkZ);
+            final Chunk chunk = instance.getChunk(chunkCoordinate.getChunkX(), chunkCoordinate.getChunkZ());
+
             if (chunk != null)
                 chunk.removeViewer(this);
         }
@@ -1615,11 +1614,9 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
 
         // Load new chunks
         for (int index : newChunks) {
-            final long chunkIndex = updatedVisibleChunks[index];
-            final int chunkX = ChunkUtils.getChunkCoordX(chunkIndex);
-            final int chunkZ = ChunkUtils.getChunkCoordZ(chunkIndex);
+            final ChunkCoordinate chunkCoordinate = updatedVisibleChunks[index];
 
-            this.instance.loadOptionalChunk(chunkX, chunkZ, chunk -> {
+            this.instance.loadOptionalChunk(chunkCoordinate.getChunkX(), chunkCoordinate.getChunkZ(), chunk -> {
                 if (chunk == null) {
                     // Cannot load chunk (auto load is not enabled)
                     return;
@@ -1674,7 +1671,7 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
     }
 
     @Override
-    public void teleport(@NotNull Position position, @Nullable long[] chunks, @Nullable Runnable callback) {
+    public void teleport(@NotNull Position position, @Nullable ChunkCoordinate[] chunks, @Nullable Runnable callback) {
         super.teleport(position, chunks, () -> {
             updatePlayerPosition();
             OptionalCallback.execute(callback);
@@ -1684,7 +1681,7 @@ public class Player extends LivingEntity implements CommandSender, Localizable, 
     @Override
     public void teleport(@NotNull Position position, @Nullable Runnable callback) {
         final boolean sameChunk = getPosition().inSameChunk(position);
-        final long[] chunks = sameChunk ? null :
+        final ChunkCoordinate[] chunks = sameChunk ? null :
                 ChunkUtils.getChunksInRange(position, getChunkRange());
         teleport(position, chunks, callback);
     }

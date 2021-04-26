@@ -57,6 +57,11 @@ public class SharedInstance extends Instance {
     }
 
     @Override
+    public Chunk getChunk(ChunkCoordinate chunkCoordinate) {
+        return instanceContainer.getChunk(chunkCoordinate);
+    }
+
+    @Override
     public void saveChunkToStorage(@NotNull Chunk chunk, @Nullable Runnable callback) {
         this.instanceContainer.saveChunkToStorage(chunk, callback);
     }

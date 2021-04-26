@@ -455,9 +455,13 @@ public class InstanceContainer extends Instance {
 
     @Override
     public Chunk getChunk(int chunkX, int chunkZ) {
-        final long index = ChunkUtils.getChunkIndex(chunkX, chunkZ);
-        final Chunk chunk = chunks.get(index);
+        final Chunk chunk = chunks.get(new ChunkCoordinate(chunkX, chunkZ));
         return ChunkUtils.isLoaded(chunk) ? chunk : null;
+    }
+
+    @Override
+    public Chunk getChunk(ChunkCoordinate chunkCoordinate) {
+        return getChunk(chunkCoordinate.getChunkX(), chunkCoordinate.getChunkZ());
     }
 
     /**
@@ -794,21 +798,18 @@ public class InstanceContainer extends Instance {
     protected void UNSAFE_unloadChunks() {
         synchronized (scheduledChunksToRemove) {
             for (Chunk chunk : scheduledChunksToRemove) {
-                final int chunkX = chunk.getChunkX();
-                final int chunkZ = chunk.getChunkZ();
-
-                final long index = ChunkUtils.getChunkIndex(chunkX, chunkZ);
+                final ChunkCoordinate coordinate = new ChunkCoordinate(chunk);
 
                 UnloadChunkPacket unloadChunkPacket = new UnloadChunkPacket();
-                unloadChunkPacket.chunkX = chunkX;
-                unloadChunkPacket.chunkZ = chunkZ;
+                unloadChunkPacket.chunkX = coordinate.getChunkX();
+                unloadChunkPacket.chunkZ = coordinate.getChunkZ();
                 chunk.sendPacketToViewers(unloadChunkPacket);
 
                 for (Player viewer : chunk.getViewers()) {
                     chunk.removeViewer(viewer);
                 }
 
-                callChunkUnloadEvent(chunkX, chunkZ);
+                callChunkUnloadEvent(coordinate);
 
                 // Remove all entities in chunk
                 getChunkEntities(chunk).forEach(entity -> {
@@ -817,8 +818,8 @@ public class InstanceContainer extends Instance {
                 });
 
                 // Clear cache
-                this.chunks.remove(index);
-                this.chunkEntities.remove(index);
+                this.chunks.remove(coordinate);
+                this.chunkEntities.remove(coordinate);
 
                 chunk.unload();
 
@@ -831,6 +832,10 @@ public class InstanceContainer extends Instance {
     private void callChunkLoadEvent(int chunkX, int chunkZ) {
         InstanceChunkLoadEvent chunkLoadEvent = new InstanceChunkLoadEvent(this, chunkX, chunkZ);
         callEvent(InstanceChunkLoadEvent.class, chunkLoadEvent);
+    }
+
+    private void callChunkUnloadEvent(ChunkCoordinate coordinate) {
+        callChunkUnloadEvent(coordinate.getChunkX(), coordinate.getChunkZ());
     }
 
     private void callChunkUnloadEvent(int chunkX, int chunkZ) {

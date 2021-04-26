@@ -1,15 +1,16 @@
 package net.minestom.server.instance.batch;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minestom.server.data.Data;
 import net.minestom.server.instance.Chunk;
+import net.minestom.server.instance.ChunkCoordinate;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceContainer;
 import net.minestom.server.utils.chunk.ChunkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AbsoluteBlockBatch implements Batch<Runnable> {
 
     // In the form of <Chunk Index, Batch>
-    private final Long2ObjectMap<ChunkBatch> chunkBatchesMap = new Long2ObjectOpenHashMap<>();
+    private final Map<ChunkCoordinate, ChunkBatch> chunkBatchesMap = new HashMap<>();
 
     // Available for other implementations to handle.
     protected final CountDownLatch readyLatch;
@@ -49,11 +50,11 @@ public class AbsoluteBlockBatch implements Batch<Runnable> {
     public void setSeparateBlocks(int x, int y, int z, short blockStateId, short customBlockId, @Nullable Data data) {
         final int chunkX = ChunkUtils.getChunkCoordinate(x);
         final int chunkZ = ChunkUtils.getChunkCoordinate(z);
-        final long chunkIndex = ChunkUtils.getChunkIndex(chunkX, chunkZ);
+        ChunkCoordinate chunkCoordinate = new ChunkCoordinate(chunkX, chunkZ);
 
         final ChunkBatch chunkBatch;
         synchronized (chunkBatchesMap) {
-            chunkBatch = chunkBatchesMap.computeIfAbsent(chunkIndex, i -> new ChunkBatch(this.options));
+            chunkBatch = chunkBatchesMap.computeIfAbsent(chunkCoordinate, i -> new ChunkBatch(this.options));
         }
 
         final int relativeX = x - (chunkX * Chunk.CHUNK_SIZE_X);
@@ -121,13 +122,11 @@ public class AbsoluteBlockBatch implements Batch<Runnable> {
         final AbsoluteBlockBatch inverse = this.options.shouldCalculateInverse() ? new AbsoluteBlockBatch() : null;
         synchronized (chunkBatchesMap) {
             AtomicInteger counter = new AtomicInteger();
-            for (Long2ObjectMap.Entry<ChunkBatch> entry : chunkBatchesMap.long2ObjectEntrySet()) {
-                final long chunkIndex = entry.getLongKey();
-                final int chunkX = ChunkUtils.getChunkCoordX(chunkIndex);
-                final int chunkZ = ChunkUtils.getChunkCoordZ(chunkIndex);
+            for (Map.Entry<ChunkCoordinate, ChunkBatch> entry : chunkBatchesMap.entrySet()) {
+                final ChunkCoordinate chunkCoordinate = entry.getKey();
                 final ChunkBatch batch = entry.getValue();
 
-                ChunkBatch chunkInverse = batch.apply(instance, chunkX, chunkZ, c -> {
+                ChunkBatch chunkInverse = batch.apply(instance, chunkCoordinate.getChunkX(), chunkCoordinate.getChunkZ(), c -> {
                     final boolean isLast = counter.incrementAndGet() == chunkBatchesMap.size();
 
                     // Execute the callback if this was the last chunk to process
@@ -150,7 +149,7 @@ public class AbsoluteBlockBatch implements Batch<Runnable> {
                 });
 
                 if (inverse != null)
-                    inverse.chunkBatchesMap.put(chunkIndex, chunkInverse);
+                    inverse.chunkBatchesMap.put(chunkCoordinate, chunkInverse);
             }
         }
 

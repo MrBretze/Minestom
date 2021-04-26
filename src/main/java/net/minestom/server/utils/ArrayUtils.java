@@ -45,14 +45,14 @@ public final class ArrayUtils {
      * @return an array containing a's indexes that aren't in b array
      */
     @NotNull
-    public static int[] getDifferencesBetweenArray(@NotNull long[] a, @NotNull long[] b) {
+    public static <T> int[] getDifferencesBetweenArray(@NotNull T[] a, @NotNull T[] b) {
         int counter = 0;
         int[] indexes = new int[Math.max(a.length, b.length)];
 
         for (int i = 0; i < a.length; i++) {
-            final long aValue = a[i];
+            final T aValue = a[i];
             boolean contains = false;
-            for (final long bValue : b) {
+            for (final T bValue : b) {
                 if (bValue == aValue) {
                     contains = true;
                     break;

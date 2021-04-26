@@ -19,6 +19,7 @@ import net.minestom.server.event.EventCallback;
 import net.minestom.server.event.entity.*;
 import net.minestom.server.event.handler.EventHandler;
 import net.minestom.server.instance.Chunk;
+import net.minestom.server.instance.ChunkCoordinate;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.InstanceManager;
 import net.minestom.server.instance.block.CustomBlock;
@@ -245,12 +246,12 @@ public class Entity implements Viewable, Tickable, EventHandler, DataContainer, 
      *
      * @param position the teleport position
      * @param chunks   the chunk indexes to load before teleporting the entity,
-     *                 indexes are from {@link ChunkUtils#getChunkIndex(int, int)},
+     *                 indexes are from {@link ChunkCoordinate},
      *                 can be null or empty to only load the chunk at {@code position}
      * @param callback the optional callback executed, even if auto chunk is not enabled
      * @throws IllegalStateException if you try to teleport an entity before settings its instance
      */
-    public void teleport(@NotNull Position position, @Nullable long[] chunks, @Nullable Runnable callback) {
+    public void teleport(@NotNull Position position, @Nullable ChunkCoordinate[] chunks, @Nullable Runnable callback) {
         Check.stateCondition(instance == null, "You need to use Entity#setInstance before teleporting an entity!");
 
         final Position teleportPosition = position.clone(); // Prevent synchronization issue
